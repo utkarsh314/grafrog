@@ -24,11 +24,43 @@ scene.add(point);
 // load the frog model
 var frog;
 
+const newShader = new THREE.ShaderMaterial({
+	uniforms:{
+	  texture:{ 
+		//value: new THREE.TextureLoader().load('assets/skin.jpg')
+		value: new THREE.Color(0x00ff00)
+	}
+	},
+	vertexShader: `
+		//varying vec2 vertexUV;
+	  void main() {
+		//vertexUV=uv;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	  }
+	`,
+	fragmentShader: `
+	  //uniform sampler2D texture;
+	  //varying vec2 vertexUV;
+	  uniform vec3 texture;
+  
+	  void main() {
+		//gl_FragColor = texture2D(texture,vertexUV);
+		gl_FragColor=vec4(texture,1.0);
+	  }
+	`,
+  });
+  
+
 const loader = new GLTFLoader();
 loader.load(
 	'assets/frog.glb',
 	function(gltf){	
 		frog = gltf.scene;
+		gltf.scene.traverse(function(node){
+			if(node.isMesh){
+				node.material=newShader;
+			}
+		});
 		scene.add(gltf.scene);
 		console.log(scene.children);
 	},
@@ -37,6 +69,8 @@ loader.load(
 		console.error(error);
 	}
 );
+
+
 
 const xSpeed = 10;
 const ySpeed = 10;
