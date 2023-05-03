@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // create a new scene
 const scene = new THREE.Scene(); 
 
 // add a camera and adjust its position
+
+
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 3, 10);
+camera.position.set(0, 20, 0);
+camera.rotation.x-=Math.PI/2;
+
 
 // create a renderer and set its size to fit the device window
 const renderer = new THREE.WebGLRenderer(); 
@@ -14,6 +18,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.BasicShadowMap;
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.update();
 
 // add a <canvas> tag to the HTML
 document.body.appendChild(renderer.domElement); 
@@ -23,16 +30,14 @@ var ambient = new THREE.AmbientLight(0xffffff, 0.5);  // ambient light source
 //ambient.castShadow=true;
 scene.add(ambient);
 var point = new THREE.PointLight(0xffffff, 0.8);      // point light source
-//point.castShadow=true;
+point.castShadow=true;
 scene.add(point);
 
 var dLight=new THREE.DirectionalLight(0xffffff,1);
+dLight.position.set(0,1000,0)
 scene.add(dLight);
 dLight.castShadow=true;
 
-
-const spotLight = new THREE.SpotLight( 0xffffff );
-spotLight.position.set( -10, 0, 0 );
 // load the frog model
 var frog;
 
@@ -43,7 +48,7 @@ const mat=new THREE.MeshPhongMaterial();
 mat.map=frogTexture;
 
 
-const geometryP = new THREE.PlaneGeometry(10, 10);
+const geometryP = new THREE.PlaneGeometry(50, 50);
 const materialP = new THREE.MeshStandardMaterial({color:0xffffff})
 const plane = new THREE.Mesh(geometryP, materialP);
 plane.castShadow = false;
@@ -90,6 +95,7 @@ const newShader = new THREE.ShaderMaterial({
         vec3 viewDirection=normalize(cameraPosition-vPosition);
         float fresnel=dot(viewDirection, vNormal);
 		gl_FragColor=vec4(0.f,fresnel,0.f, 1.0);
+		//gl_FragColor=vec4(texture,1.0);
 	  }
 	`,
   });
@@ -120,6 +126,7 @@ loader.load(
 );
 
 
+
 const xSpeed = 10;
 const ySpeed = 10;
 const xAngle = 0.1;
@@ -146,6 +153,7 @@ function onDocumentKeyDown(event) {
  
 function animate(){
 	requestAnimationFrame( animate );
+	controls.update();
 	renderer.render( scene, camera );
 }
 animate();
