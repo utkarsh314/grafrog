@@ -1,19 +1,21 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
 // create a new scene
 const scene = new THREE.Scene(); 
+scene.background = new THREE.Color(0xa8def0);
 
 // add a camera and adjust its position
 
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 20, 0);
-camera.rotation.x-=Math.PI/2;
-
+camera.position.set(0, 3, 10);
 
 // create a renderer and set its size to fit the device window
-const renderer = new THREE.WebGLRenderer(); 
+const renderer = new THREE.WebGLRenderer({
+	antialias: true
+}); 
 renderer.setSize(window.innerWidth, window.innerHeight); 
 
 renderer.shadowMap.enabled = true;
@@ -34,7 +36,7 @@ point.castShadow=true;
 scene.add(point);
 
 var dLight=new THREE.DirectionalLight(0xffffff,1);
-dLight.position.set(0,1000,0)
+dLight.position.set(0,300,0)
 scene.add(dLight);
 dLight.castShadow=true;
 
@@ -56,12 +58,7 @@ plane.receiveShadow = true;
 plane.rotation.x = -Math.PI / 2;
 scene.add(plane);
 
-
-
-
-
-
-
+// shaders
 const newShader = new THREE.ShaderMaterial({
 	uniforms:{
 	  	texture:{ 
@@ -92,7 +89,7 @@ const newShader = new THREE.ShaderMaterial({
         uniform vec3 lightPosition;
         uniform vec3 texture;
       void main() {
-        vec3 viewDirection=normalize(cameraPosition-vPosition);
+        vec3 viewDirection=normalize(lightPosition-vPosition);
         float fresnel=dot(viewDirection, vNormal);
 		gl_FragColor=vec4(0.f,fresnel,0.f, 1.0);
 		//gl_FragColor=vec4(texture,1.0);
@@ -101,19 +98,17 @@ const newShader = new THREE.ShaderMaterial({
   });
 
 
-  
-
 const loader = new GLTFLoader();
 loader.load(
-	'assets/frog.glb',
+	'assets/frogskell.glb',
 	function(gltf){	
-		frog = gltf.scene.children[0];
+		frog = gltf.scene;
 		frog.traverse(function(node){
 			if(node.isMesh){
 				node.material=newShader;
 			}
 		});
-        frog.position.y+=5;
+        frog.position.y+=2;
         frog.castShadow=true;
         frog.receiveShadow=true;
 		scene.add(frog);
@@ -124,8 +119,6 @@ loader.load(
 		console.error(error);
 	}
 );
-
-
 
 const xSpeed = 10;
 const ySpeed = 10;
