@@ -108,7 +108,7 @@ var skull;
 // loading the frog model
 const loader = new GLTFLoader();
 loader.load(
-	'assets/frog6.glb',
+	'assets/frog.glb',
 	function(gltf){	
 		frog = gltf.scene;
 		frog.traverse(function(node){
