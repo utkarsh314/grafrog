@@ -6,62 +6,111 @@ const scene = new THREE.Scene();
 
 // add a camera and adjust its position
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 10);
+camera.position.set(0, 3, 10);
 
 // create a renderer and set its size to fit the device window
 const renderer = new THREE.WebGLRenderer(); 
 renderer.setSize(window.innerWidth, window.innerHeight); 
+
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.BasicShadowMap;
 
 // add a <canvas> tag to the HTML
 document.body.appendChild(renderer.domElement); 
 
 //add lighting
 var ambient = new THREE.AmbientLight(0xffffff, 0.5);  // ambient light source
+//ambient.castShadow=true;
 scene.add(ambient);
 var point = new THREE.PointLight(0xffffff, 0.8);      // point light source
+//point.castShadow=true;
 scene.add(point);
 
+var dLight=new THREE.DirectionalLight(0xffffff,1);
+scene.add(dLight);
+dLight.castShadow=true;
+
+
+const spotLight = new THREE.SpotLight( 0xffffff );
+spotLight.position.set( -10, 0, 0 );
 // load the frog model
 var frog;
 
+//Koad Texture
+const textureLoader=new THREE.TextureLoader();
+const frogTexture=textureLoader.load('assets/skin.jpg');
+const mat=new THREE.MeshPhongMaterial();
+mat.map=frogTexture;
+
+
+const geometryP = new THREE.PlaneGeometry(10, 10);
+const materialP = new THREE.MeshStandardMaterial({color:0xffffff})
+const plane = new THREE.Mesh(geometryP, materialP);
+plane.castShadow = false;
+plane.receiveShadow = true;
+plane.rotation.x = -Math.PI / 2;
+scene.add(plane);
+
+
+
+
+
+
+
 const newShader = new THREE.ShaderMaterial({
 	uniforms:{
-	  texture:{ 
+	  	texture:{ 
 		//value: new THREE.TextureLoader().load('assets/skin.jpg')
 		value: new THREE.Color(0x00ff00)
-	}
+		},
+		lightPosition:{ value: dLight.position},
+		/*ambientColor: { value: new THREE.Color() },
+      	diffuseColor: { value: new THREE.Color() }*/
+	
 	},
+	//lights:true,
 	vertexShader: `
-		//varying vec2 vertexUV;
-	  void main() {
-		//vertexUV=uv;
+		varying vec3 vNormal;
+        varying vec3 vPosition;
+        varying vec2 vUv;
+	void main() {
+		vNormal=normal;
+        vPosition=position;
+        vUv=uv;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	  }
 	`,
 	fragmentShader: `
-	  //uniform sampler2D texture;
-	  //varying vec2 vertexUV;
-	  uniform vec3 texture;
-  
-	  void main() {
-		//gl_FragColor = texture2D(texture,vertexUV);
-		gl_FragColor=vec4(texture,1.0);
+        varying vec3 vPosition;
+        varying vec3 vNormal;
+        varying vec3 vUv;
+        uniform vec3 lightPosition;
+        uniform vec3 texture;
+      void main() {
+        vec3 viewDirection=normalize(cameraPosition-vPosition);
+        float fresnel=dot(viewDirection, vNormal);
+		gl_FragColor=vec4(0.f,fresnel,0.f, 1.0);
 	  }
 	`,
   });
+
+
   
 
 const loader = new GLTFLoader();
 loader.load(
 	'assets/frog.glb',
 	function(gltf){	
-		frog = gltf.scene;
-		gltf.scene.traverse(function(node){
+		frog = gltf.scene.children[0];
+		frog.traverse(function(node){
 			if(node.isMesh){
 				node.material=newShader;
 			}
 		});
-		scene.add(gltf.scene);
+        frog.position.y+=5;
+        frog.castShadow=true;
+        frog.receiveShadow=true;
+		scene.add(frog);
 		console.log(scene.children);
 	},
 	undefined,
@@ -69,7 +118,6 @@ loader.load(
 		console.error(error);
 	}
 );
-
 
 
 const xSpeed = 10;
@@ -90,8 +138,8 @@ function onDocumentKeyDown(event) {
     else if(!event.shiftKey && keyCode == "ArrowRight") targetPosition.x += xSpeed;
 	else if(event.shiftKey && keyCode == "ArrowUp") frog.rotation.x -= yAngle; 
 	else if(event.shiftKey && keyCode == "ArrowDown") frog.rotation.x += yAngle;
-    else if(event.shiftKey && keyCode == "ArrowLeft") frog.rotation.z -= xAngle;
-    else if(event.shiftKey && keyCode == "ArrowRight") frog.rotation.z += xAngle;
+    else if(event.shiftKey && keyCode == "ArrowLeft") frog.rotation.y -= xAngle;
+    else if(event.shiftKey && keyCode == "ArrowRight") frog.rotation.y += xAngle;
 
 	if(!event.shiftKey) frog.position.lerp(targetPosition, smoothness);
 };
