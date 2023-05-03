@@ -97,20 +97,40 @@ const newShader = new THREE.ShaderMaterial({
 	`,
   });
 
+//rightLegValues
+var rTibia; var rFoot;
 
+//leftLegValues
+var lTibia; var lFoot;
+
+//ArmValues
+var Humerus;
+//Skull
+var skull;
 const loader = new GLTFLoader();
 loader.load(
-	'assets/frogskell.glb',
+	'assets/frog6.glb',
 	function(gltf){	
 		frog = gltf.scene;
 		frog.traverse(function(node){
 			if(node.isMesh){
 				node.material=newShader;
+				node.castShadow=true;
 			}
 		});
         frog.position.y+=2;
+		frog.rotation.y+=Math.PI/2;
         frog.castShadow=true;
         frog.receiveShadow=true;
+		//Store right Foot values
+		rTibia=frog.getObjectByName('righttibia').rotation.z; rFoot=frog.getObjectByName('rightfoot').rotation.z;
+		//Store left Foot Values
+		lTibia=frog.getObjectByName('lefttibia').rotation.z; lFoot=frog.getObjectByName('leftfoot').rotation.z;
+		//Humerus
+		Humerus=frog.getObjectByName('righthumerus').rotation.z; 
+
+		skull=frog.getObjectByName('skull').rotation.x;
+
 		scene.add(frog);
 		console.log(scene.children);
 	},
@@ -119,6 +139,7 @@ loader.load(
 		console.error(error);
 	}
 );
+
 
 const xSpeed = 10;
 const ySpeed = 10;
@@ -140,10 +161,60 @@ function onDocumentKeyDown(event) {
 	else if(event.shiftKey && keyCode == "ArrowDown") frog.rotation.x += yAngle;
     else if(event.shiftKey && keyCode == "ArrowLeft") frog.rotation.y -= xAngle;
     else if(event.shiftKey && keyCode == "ArrowRight") frog.rotation.y += xAngle;
+	else if (keyCode=="s") {
+		if(frog.getObjectByName('righttibia').rotation.z==rTibia){
+			frog.getObjectByName('righttibia').rotation.z-=0.2;
+			frog.getObjectByName('rightfoot').rotation.z-=1;
+			frog.getObjectByName('lefttibia').rotation.z-=0.2;
+			frog.getObjectByName('leftfoot').rotation.z-=1;
+		}
+		
+	}
+	else if (keyCode=="w") {
+		if(frog.getObjectByName('righthumerus').rotation.z==Humerus){
+			frog.getObjectByName('righthumerus').rotation.z+=1;
+			frog.getObjectByName('lefthumerus').rotation.z+=1;
+		}
+	}
+	else if (keyCode=="a"){
+		if(frog.getObjectByName('skull').rotation.x==skull){
+			frog.getObjectByName('skull').rotation.x+=0.4;
+		}
+	}
+	else if (keyCode=="d"){
+		if(frog.getObjectByName('skull').rotation.x==skull){
+			frog.getObjectByName('skull').rotation.x-=0.4;
+		}
+	}
+
 
 	if(!event.shiftKey) frog.position.lerp(targetPosition, smoothness);
 };
  
+document.addEventListener("keyup", onDocumentKeyUp, false);
+function onDocumentKeyUp(event) {
+    var keyCode = event.key;
+	const targetPosition = frog.position.clone();
+	const targetRotation = frog.rotation.clone();
+	if (keyCode=="s") {
+
+		frog.getObjectByName('righttibia').rotation.z=rTibia;
+		frog.getObjectByName('rightfoot').rotation.z=rFoot;
+
+		frog.getObjectByName('lefttibia').rotation.z=lTibia;
+		frog.getObjectByName('leftfoot').rotation.z=lFoot;
+	}
+	else if(keyCode=="w"){
+		frog.getObjectByName('righthumerus').rotation.z=Humerus;
+		frog.getObjectByName('lefthumerus').rotation.z=Humerus;
+	}
+	else if(keyCode=="a"||keyCode=="d"){
+		frog.getObjectByName('skull').rotation.x=skull;
+	}
+
+	if(!event.shiftKey) frog.position.lerp(targetPosition, smoothness);
+};
+
 function animate(){
 	requestAnimationFrame( animate );
 	controls.update();
